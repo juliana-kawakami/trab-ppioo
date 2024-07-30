@@ -46,23 +46,6 @@ class BinaryTree:
         print("Final Queue: " + str(queue))
         return queue
 
-    def parser(self, tokens):
-        stack = []
-
-        for token in tokens:
-            if token.lstrip('-').replace('.', '').isdigit():  # Verifica números decimais e negativos
-                actual_node = Node(token)
-                stack.append(actual_node)
-            else:
-                actual_node = Node(token)
-                if len(stack) >= 2:
-                    actual_node.right = stack.pop()
-                    actual_node.left = stack.pop()
-                stack.append(actual_node)
-
-        self.root = stack[0] if stack else None
-        return self.root
-
     def print_tree(self, node, level=0, label="."):
         prefix = " " * (level * 4)
         print(prefix + label + ": " + str(node.token))
@@ -94,6 +77,22 @@ def lexer(expressao):
         tokens.append(num)
     
     return tokens
+
+def parser(tokens):
+    stack = []
+
+    for token in tokens:
+        if token.lstrip('-').replace('.', '').isdigit():  # Verifica números decimais e negativos
+            actual_node = Node(token)
+            stack.append(actual_node)
+        else:
+            actual_node = Node(token)
+            if len(stack) >= 2:
+                actual_node.right = stack.pop()
+                actual_node.left = stack.pop()
+            stack.append(actual_node)
+
+    return stack[0] if stack else None
 
 def eval_step(node, tree):
     if node is None:
@@ -127,6 +126,8 @@ def eval_step(node, tree):
     # Imprime a árvore após a operação
     print("\nÁrvore após realizar a operação:")
     tree.print_tree(tree.root)
+    expression_str = tree_to_string(tree.root)
+    print("Expression String:", expression_str)
     
     return result
 
@@ -141,6 +142,23 @@ def post_order_traversal(node):
     traverse(node)
     return result
 
+def tree_to_string(node):
+    if node is None:
+        return ""
+
+    # Se for um nó folha, retorna o valor do token
+    if node.left is None and node.right is None:
+        return node.token
+    
+    # Monta a string da sub-árvore esquerda
+    left_str = tree_to_string(node.left)
+    
+    # Monta a string da sub-árvore direita
+    right_str = tree_to_string(node.right)
+    
+    # Retorna a expressão completa com parênteses
+    return f"({left_str} {node.token} {right_str})"
+
 if __name__ == "__main__":
     expressao = "58- -8*(58+31)- -14"
     # expressao = "-71 * (-76 * 91 * (10 - 5 - -82) - -79)"
@@ -153,7 +171,8 @@ if __name__ == "__main__":
     rpn_tokens = tree.reverse_polish(tokens, "+-*/()")
     print("Reverse Polish Notation Tokens:", rpn_tokens)
 
-    expression_tree = tree.parser(rpn_tokens)
+    expression_tree = parser(rpn_tokens)
+    tree.root = expression_tree  # Define a raiz da árvore na instância de BinaryTree
     print("Post-Order Traversal Tokens:")
     post_order_tokens = post_order_traversal(tree.root)
     print(post_order_tokens)
@@ -161,5 +180,6 @@ if __name__ == "__main__":
     print("Evaluating Tree:")
     result = eval_step(tree.root, tree)
     print("Result:", result)
+    print("---------------------")
     print("Final Tree:")
     tree.print_tree(tree.root)

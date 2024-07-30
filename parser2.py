@@ -95,10 +95,56 @@ def lexer(expressao):
     
     return tokens
 
+def eval_step(node, tree):
+    if node is None:
+        return 0
+
+    # Se for um nó folha, retorna o valor do token
+    if node.left is None and node.right is None:
+        return float(node.token)
+    
+    left_val = eval_step(node.left, tree)
+    right_val = eval_step(node.right, tree)
+    
+    if node.token == '+':
+        result = left_val + right_val
+    elif node.token == '-':
+        result = left_val - right_val
+    elif node.token == '*':
+        result = left_val * right_val
+    elif node.token == '/':
+        result = left_val / right_val
+    else:
+        raise ValueError(f"Operação desconhecida: {node.token}")
+    
+    # Atualiza o token do nó atual com o resultado da operação
+    node.token = str(result)
+    
+    # Remove os filhos, pois a operação já foi realizada
+    node.left = None
+    node.right = None
+    
+    # Imprime a árvore após a operação
+    print("\nÁrvore após realizar a operação:")
+    tree.print_tree(tree.root)
+    
+    return result
+
+def post_order_traversal(node):
+    result = []
+    def traverse(node):
+        if node is None:
+            return
+        traverse(node.left)
+        traverse(node.right)
+        result.append(node.token)
+    traverse(node)
+    return result
+
 if __name__ == "__main__":
-    # expressao = "58- -8*(58+31)- -14"
+    expressao = "58- -8*(58+31)- -14"
     # expressao = "-71 * (-76 * 91 * (10 - 5 - -82) - -79)"
-    expressao = "1/24 + 1 - 24 * (2 * 2 * -3)"
+    # expressao = "1/24 + 1 - 24 * (2 * 2 * -3)"
 
     tokens = lexer(expressao)
     print("Tokens:", tokens)
@@ -108,4 +154,12 @@ if __name__ == "__main__":
     print("Reverse Polish Notation Tokens:", rpn_tokens)
 
     expression_tree = tree.parser(rpn_tokens)
+    print("Post-Order Traversal Tokens:")
+    post_order_tokens = post_order_traversal(tree.root)
+    print(post_order_tokens)
+
+    print("Evaluating Tree:")
+    result = eval_step(tree.root, tree)
+    print("Result:", result)
+    print("Final Tree:")
     tree.print_tree(tree.root)
